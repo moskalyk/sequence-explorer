@@ -137,7 +137,7 @@ const Explorer = () => {
       })
 
       console.log(balances)
-      
+
       balances.balances.map((nft: any) => {
         if((nft.contractType == 'ERC1155' || nft.contractType == 'ERC721') && nft.tokenMetadata && nft.tokenMetadata.image){
           nfts.push({ 
@@ -309,15 +309,15 @@ const Explorer = () => {
 
     if(mainnetNetwork == 'magenta'){
       console.log('connecting to mainnet')
-      setIndexerSignal(new SequenceIndexerClient('https://mainnet-indexer-v2.sequence.app'))
+      setIndexerSignal(new SequenceIndexerClient('https://mainnet-indexer.sequence.app'))
       sequence.initWallet('mainnet')
     } else if(polygonNetwork == 'magenta'){
       console.log('connecting to polygon')
-      setIndexerSignal(new SequenceIndexerClient('https://polygon-indexer-v2.sequence.app'))
+      setIndexerSignal(new SequenceIndexerClient('https://polygon-indexer.sequence.app'))
       sequence.initWallet('polygon')
     } else if(mumbaiNetwork == 'magenta'){
       console.log('connecting to mumbai')
-      setIndexerSignal(new SequenceIndexerClient('https://mumbai-indexer-v2.sequence.app'))
+      setIndexerSignal(new SequenceIndexerClient('https://mumbai-indexer.sequence.app'))
       sequence.initWallet('mumbai')
     }
 
@@ -358,11 +358,11 @@ const Explorer = () => {
       <span className={`search-type ${contractSearch}`} onClick={() => {setSearchQuery('');setQuickView(false);setNFTs([]);searchType('contract')}}>contract</span><span className={`search-type ${walletSearch}`} onClick={() => {setSearchQuery('');setQuickView(false);setNFTs([]);searchType('wallet')}} >wallet</span>
       <br/>
       <br/>
+      <span className={`network ${mainnetNetwork}`} onClick={() => {networkType('mainnet')}}>mainnet</span><span className={`network ${polygonNetwork}`} onClick={() => networkType('polygon')}>polygon</span><span className={`network ${mumbaiNetwork}`} onClick={() => networkType('mumbai')}>mumbai</span>
+      <br/>
+      <br/>
       <input className="search" value={searchQuery} onInput={onChangeInput} placeholder="0x..."></input>
       <br/>
-      <br/>
-    
-      <span className={`network ${mainnetNetwork}`} onClick={() => {networkType('mainnet')}}>mainnet</span><span className={`network ${polygonNetwork}`} onClick={() => networkType('polygon')}>polygon</span><span className={`network ${mumbaiNetwork}`} onClick={() => networkType('mumbai')}>mumbai</span>
       <br/>
       <Modal
         isOpen={modalIsOpen}
