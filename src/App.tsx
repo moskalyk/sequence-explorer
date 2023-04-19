@@ -136,8 +136,10 @@ const Explorer = () => {
         includeMetadata: true
       })
 
+      console.log(balances)
+      
       balances.balances.map((nft: any) => {
-        if(nft.contractType == 'ERC1155' || nft.contractType == 'ERC721' && nft.tokenMetadata){
+        if((nft.contractType == 'ERC1155' || nft.contractType == 'ERC721') && nft.tokenMetadata && nft.tokenMetadata.image){
           nfts.push({ 
             image: nft.tokenMetadata.image, 
             name: nft.tokenMetadata.name, 
