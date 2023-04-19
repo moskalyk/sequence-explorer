@@ -126,90 +126,27 @@ const Explorer = () => {
 
   async function getNFTs(address: any) {
     try {
-      let accountAddress = address.target.value
-      if(accountAddress.includes('.eth')){
-        // Get a provider
-        const provider = new ethers.providers.JsonRpcProvider('https://nodes.sequence.app/mainnet')
 
-        var addressFromEns = await provider.resolveName(accountAddress);
-        console.log(addressFromEns)
-        accountAddress = addressFromEns
-      }
-      const filter = {accountAddress: accountAddress}
-      const txs = await indexerSignal.getTransactionHistory({
-        filter: filter,
+      let accountAddress = address.target.value
+
+      const nfts: any = []
+
+      const balances = await indexerSignal.getTokenBalances({
+        accountAddress: accountAddress,
         includeMetadata: true
       })
 
-      // filter transactions for RECEIVE events, and store contract addressses
-      let contracts: string[] = []
-      txs.transactions.map((tx: any) => {
-        tx.transfers.map((transfer: any) => {
-          if(transfer.transferType == "RECEIVE")
-            contracts.push(transfer.contractAddress)
-        })
-      })
-
-      const nftBalances: any = []
-      const nftMap = new Map()
-
-      // get balances of all RECEIVE contractAddresses
-      for(let contract of contracts){
-        const balances = await indexerSignal.getTokenBalances({
-          contractAddress: contract,
-          accountAddress: accountAddress
-        })
-        balances.balances.map((token: any) => {
-          if(token.contractType == 'ERC1155' || token.contractType == 'ERC721')
-            nftBalances.push({tokenID: token.tokenID, contractAddress: token.contractAddress })
-        })
-      }
-
-      // get uniqueness of tokenIDs & contract addresses
-      nftBalances.map((nft: any) => {
-        if(nftMap.has(`${nft.contractAddress}/${nft.tokenID}`)){
-          nftMap.get(`${nft.contractAddress}/${nft.tokenID}`).quantity++
-        }else {
-          nftMap.set(`${nft.contractAddress}/${nft.tokenID}`, {
-            quantity: 1,
-            tokenID: nft.tokenID,
-            contractAddress: nft.contractAddress
+      balances.balances.map((nft: any) => {
+        if(nft.contractType == 'ERC1155' || nft.contractType == 'ERC721' && nft.tokenMetadata){
+          nfts.push({ 
+            image: nft.tokenMetadata.image, 
+            name: nft.tokenMetadata.name, 
+            contractAddress: nft.contractAddress, 
+            quantity: nft.balance
           })
         }
       })
-      // get metadata
-      const nfts: any = []
-      let url;
-      if(mainnetNetwork == 'magenta'){
-        console.log('connecting to mainnet')
-        url = `https://metadata.sequence.app/tokens/mainnet`
-      } else if(polygonNetwork == 'magenta'){
-        console.log('connecting to polygon')
-        url = `https://metadata.sequence.app/tokens/polygon`
 
-      } else if(mumbaiNetwork == 'magenta'){
-        console.log('connecting to mumbai')
-        url = `https://metadata.sequence.app/tokens/mumbai`
-      }
-
-      for (let nft of nftMap.values()){
-        console.log(nft)
-        const res = await fetch(`${url}/${nft.contractAddress}/${nft.tokenID}`)
-        
-        const nftMeta = (await res.json())
-
-        if(nftMeta[0]){
-
-        console.log(nftMeta)
-        nftMeta[0].quantity = nft.quantity
-        console.log(nft.quantity)
-
-        if(nftMeta != null)
-          nfts.push(nftMeta[0])
-        }
-
-      }
-      console.log(nfts)
       return {success: true, NFTs: nfts}
     } catch(e){
       console.log(e)
