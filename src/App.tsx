@@ -391,7 +391,7 @@ const Explorer = () => {
     return () => {
       window.removeEventListener("storage", listener);
     };
-  }, [mainnetNetwork, polygonNetwork, mumbaiNetwork]);
+  }, [network]);
 
   return (
     <div>
