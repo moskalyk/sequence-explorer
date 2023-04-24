@@ -149,6 +149,7 @@ const TransactionHistory = (props: any) => {
   }
 
   const onChangeInput = async (text: any) => {
+    props.searchType('contract')
     props.setLoading(true)
     props.setQuickView(false)
     props.setSearchQuery(text.target.value)
@@ -231,6 +232,7 @@ const Collections = (props: any) => {
   }
 
   const onChangeInput = async (text: any) => {
+    props.searchType('wallet')
     props.setLoading(true)
     props.setQuickView(false)
     props.setSearchQuery(text.target.value)
@@ -423,6 +425,7 @@ const Explorer = () => {
                         setFileTitle={setFileTitle}
                         setHeaders={setHeaders}
                         setTransactions={setTransactions}
+                        searchType={searchType}
                       />,
           },
           {
@@ -438,16 +441,12 @@ const Explorer = () => {
                         setFileTitle={setFileTitle}
                         setHeaders={setHeaders}
                         setTransactions={setTransactions}
+                        searchType={searchType}
                       />,
           }]}
         />
       </Box>
-      {/* <span className={`search-type ${contractSearch}`} onClick={() => {setSearchQuery('');setQuickView(false);setNFTs([]);searchType('contract')}}>contract</span><span className={`search-type ${walletSearch}`} onClick={() => {setSearchQuery('');setQuickView(false);setNFTs([]);searchType('wallet')}} >wallet</span> */}
       <br/>
-      {/* <span className={`network ${mainnetNetwork}`} onClick={() => {networkType('mainnet')}}>mainnet</span><span className={`network ${polygonNetwork}`} onClick={() => networkType('polygon')}>polygon</span><span className={`network ${mumbaiNetwork}`} onClick={() => networkType('mumbai')}>mumbai</span> */}
-      
-
-      {/* <input className="search" value={searchQuery} onInput={onChangeInput} placeholder="0x..."></input> */}
       <br/>
       <br/>
       <Modal
