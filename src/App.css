@@ -1,21 +1,11 @@
 .App {
   text-align: center;
 }
+
 html {
   /* background: linear-gradient(black, #2E22BE); */
-  background: linear-gradient(180deg, #000 0%, #2E22BE 160%);
+  /* background: linear-gradient(180deg, #fff 0%, #2E22BE 160%) !important; */
   background-attachment: fixed; /*edit*/
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
 }
 
 .App-header {
@@ -179,7 +169,7 @@ nav {
   width: 200px;
   margin: auto;
 }
-nav ul{height:60px; width:100%; margin-left: -25px}
+nav ul{height:80px; width:100%; margin-left: -25px}
 nav ul{overflow:hidden; overflow-y:scroll;}
 
 ul {

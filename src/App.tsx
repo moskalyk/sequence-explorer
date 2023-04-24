@@ -6,6 +6,20 @@ import { sequence } from '0xsequence'
 import { SequenceIndexerClient } from '@0xsequence/indexer'
 import Modal from 'react-modal';
 
+import { 
+  SearchInput,
+  RadioGroup,
+  GradientAvatar,
+  Tabs, 
+  Scroll,
+  Text, 
+  Button, 
+  Box, 
+  IconButton, 
+  SunIcon, 
+  Placeholder,
+  useTheme } from '@0xsequence/design-system'
+
 const customStyles = {
   content: {
     color: 'white',
@@ -21,9 +35,9 @@ const customStyles = {
 const Address = (props: any) => {
   return(
     <>
-      <br/>
-      <span className="tx">→ to {props.address.slice(0,6)+'...'}</span>
-      <br/>
+      <Box justifyContent='center' alignItems='center'>
+        <Text variant="medium">→ to </Text><GradientAvatar style={{margin: '10px'}} address={props.address}/> <Text variant="medium">{props.address.slice(0,6)+'...'}</Text>
+      </Box>
     </>
   )
 }
@@ -97,69 +111,13 @@ function exportCSVFile(headers: any, items: any, fileTitle: any) {
   }
 }
 
-const Explorer = () => {
-
-  const [isSearching, setIsSearching] = React.useState<any>(false)
-  const [loading, setLoading] = React.useState<any>(false)
-  const [NFTs, setNFTs] = React.useState<any>([])
-  const [transactions, setTransactions] = React.useState<any>()
-  const [modalIsOpen, setIsOpen] = React.useState(false);
-  const [listName, setListName] = React.useState('');
-  const [cidList, setCidList] = React.useState<any>([])
-  const [addresses, setAddresses] = React.useState<any>([])
-  const [searchQuery, setSearchQuery] = React.useState<any>()
-  const [quickView, setQuickView] = React.useState(false)
-  const [indexerSignal, setIndexerSignal] = React.useState<any>(null)
-
-  // csv file 
-  const [fileTitle, setFileTitle] = React.useState<any>(null)
-  const [headers, setHeaders] = React.useState<any>(null)
-
-  // search type
-  const [contractSearch, setContractSearch] = React.useState<any>('search-activated')
-  const [walletSearch, setWalletSearch] = React.useState<any>(null)
-
-  // networks
-  const [mainnetNetwork, setMainnetNetwork] = React.useState<any>(null)
-  const [polygonNetwork, setPolygonNetwork] = React.useState<any>(null)
-  const [mumbaiNetwork, setMumbaiNetwork] = React.useState<any>('magenta')
-
-  async function getNFTs(address: any) {
-    try {
-
-      let accountAddress = address.target.value
-
-      const nfts: any = []
-
-      const balances = await indexerSignal.getTokenBalances({
-        accountAddress: accountAddress,
-        includeMetadata: true
-      })
-
-      console.log(balances)
-
-      balances.balances.map((nft: any) => {
-        if((nft.contractType == 'ERC1155' || nft.contractType == 'ERC721') && nft.tokenMetadata && nft.tokenMetadata.image){
-          nfts.push({ 
-            image: nft.tokenMetadata.image, 
-            name: nft.tokenMetadata.name, 
-            contractAddress: nft.contractAddress, 
-            quantity: nft.balance
-          })
-        }
-      })
-
-      return {success: true, NFTs: nfts}
-    } catch(e){
-      console.log(e)
-      return {success: false, error: e, NFTs: []}
-    }
-  }
+const TransactionHistory = (props: any) => {
+  const {theme, setTheme} = useTheme()
 
   async function getHistory(address: any) {
 
     try {
-      const history = await indexerSignal.getTransactionHistory({
+      const history = await props.indexer.getTransactionHistory({
         filter: {contractAddress: address.target.value},
       })
   
@@ -191,17 +149,97 @@ const Explorer = () => {
   }
 
   const onChangeInput = async (text: any) => {
-    setLoading(true)
-    setQuickView(false)
-    setSearchQuery(text.target.value)
+    props.setLoading(true)
+    props.setQuickView(false)
+    props.setSearchQuery(text.target.value)
 
     setTimeout(async () => {
-      setIsSearching(true)
-      setFileTitle(text.target.value + "")
+      props.setIsSearching(true)
+      props.setFileTitle(text.target.value + "")
 
-      if(contractSearch != 'search-activated'){
+      const txComponents = []
+      const txRaw = []
 
-        const nfts = await getNFTs(text)
+      const txs = await getHistory(text)
+      console.log(txs)
+
+      props.setHeaders({
+        transferType: "Transfer Type",
+        to: "To",
+        from: "From",
+        contractType: "Contract Type",
+        tokenId: "Token Id"
+      })
+
+      for (let i = 0; i < txs.txs.length; i++) {
+        txComponents.push(<Transaction transferType={txs.txs[i].transferType} to={txs.txs[i].to} from={txs.txs[i].from} contractType={txs.txs[i].contractType} tokenId={txs.txs[i].tokenId}/>)
+        txRaw.push({
+          transferType: txs.txs[i].transferType,
+          to: txs.txs[i].to,
+          from: txs.txs[i].from,
+          contractType: txs.txs[i].contractType,
+          tokenId: txs.txs[i].tokenId
+        })
+      }
+      props.setNFTs(txComponents)
+      props.setTransactions(txRaw)
+      props.setLoading(false)
+    }, 2000)
+  }
+
+  return(<>
+  <br/>
+    <Box justifyContent={'center'} width="full">
+      <SearchInput style={{border: 'none', color: theme == 'dark'? 'white' : 'black'}} label="" labelLocation="top" onChange={(evt: any) => onChangeInput(evt)}/>
+    </Box>
+  </>)
+}
+
+const Collections = (props: any) => {
+  const {theme, setTheme} = useTheme()
+
+  async function getNFTs(address: any) {
+    try {
+
+      let accountAddress = address.target.value
+
+      const nfts: any = []
+
+      const balances = await props.indexer.getTokenBalances({
+        accountAddress: accountAddress,
+        includeMetadata: true
+      })
+
+      console.log(balances)
+
+      balances.balances.map((nft: any) => {
+        if((nft.contractType == 'ERC1155' || nft.contractType == 'ERC721') && nft.tokenMetadata && nft.tokenMetadata.image){
+          nfts.push({ 
+            image: nft.tokenMetadata.image, 
+            name: nft.tokenMetadata.name, 
+            contractAddress: nft.contractAddress, 
+            quantity: nft.balance
+          })
+        }
+      })
+
+      return {success: true, NFTs: nfts}
+    } catch(e){
+      console.log(e)
+      return {success: false, error: e, NFTs: []}
+    }
+  }
+
+  const onChangeInput = async (text: any) => {
+    props.setLoading(true)
+    props.setQuickView(false)
+    props.setSearchQuery(text.target.value)
+
+    setTimeout(async () => {
+      props.setIsSearching(true)
+      props.setFileTitle(text.target.value + "")
+
+      const nfts = await getNFTs(text)
         const nftsComponents = []
         
         for(let i = 0; i < nfts.NFTs.length; i++){
@@ -209,39 +247,47 @@ const Explorer = () => {
             nftsComponents.push(<NFT fade={i % 2 == 0} image={nfts.NFTs[i].image} name={nfts.NFTs[i].name} contractAddress={nfts.NFTs[i].contractAddress} quantity={nfts.NFTs[i].quantity}/>)
         }
       
-        setNFTs(nftsComponents)
-      } else {
-        const txComponents = []
-        const txRaw = []
-
-        const txs = await getHistory(text)
-        console.log(txs)
-
-        setHeaders({
-          transferType: "Transfer Type",
-          to: "To",
-          from: "From",
-          contractType: "Contract Type",
-          tokenId: "Token Id"
-        })
-
-        for (let i = 0; i < txs.txs.length; i++) {
-          txComponents.push(<Transaction transferType={txs.txs[i].transferType} to={txs.txs[i].to} from={txs.txs[i].from} contractType={txs.txs[i].contractType} tokenId={txs.txs[i].tokenId}/>)
-          txRaw.push({
-            transferType: txs.txs[i].transferType,
-            to: txs.txs[i].to,
-            from: txs.txs[i].from,
-            contractType: txs.txs[i].contractType,
-            tokenId: txs.txs[i].tokenId
-          })
-        }
-        setNFTs(txComponents)
-        setTransactions(txRaw)
-      }
-
-      setLoading(false)
+      props.setNFTs(nftsComponents)
+      props.setLoading(false)
     }, 2000)
   }
+
+  return(<>
+  <br/>
+    <Box justifyContent={'center'} width="full">
+      <SearchInput style={{border: 'none', color: theme == 'dark'? 'white' : 'black'}} label="" labelLocation="top" onChange={(e: any) => onChangeInput(e)}/>
+    </Box>
+  </>)
+}
+
+const Explorer = () => {
+  const {theme, setTheme} = useTheme()
+
+  const [isSearching, setIsSearching] = React.useState<any>(false)
+  const [loading, setLoading] = React.useState<any>(false)
+  const [NFTs, setNFTs] = React.useState<any>([])
+  const [transactions, setTransactions] = React.useState<any>()
+  const [modalIsOpen, setIsOpen] = React.useState(false);
+  const [listName, setListName] = React.useState('');
+  const [cidList, setCidList] = React.useState<any>([])
+  const [addresses, setAddresses] = React.useState<any>([])
+  const [searchQuery, setSearchQuery] = React.useState<any>()
+  const [quickView, setQuickView] = React.useState(false)
+  const [indexerSignal, setIndexerSignal] = React.useState<any>(null)
+
+  // csv file 
+  const [fileTitle, setFileTitle] = React.useState<any>(null)
+  const [headers, setHeaders] = React.useState<any>(null)
+
+  // search type
+  const [contractSearch, setContractSearch] = React.useState<any>('search-activated')
+  const [walletSearch, setWalletSearch] = React.useState<any>(null)
+
+  // networks
+  const [network, setNetwork] = React.useState('polygon')
+  const [mainnetNetwork, setMainnetNetwork] = React.useState<any>(null)
+  const [polygonNetwork, setPolygonNetwork] = React.useState<any>(null)
+  const [mumbaiNetwork, setMumbaiNetwork] = React.useState<any>('magenta')
 
   const searchType = (search: any) => {
     setContractSearch(null)
@@ -307,15 +353,15 @@ const Explorer = () => {
 
   React.useEffect(() => {
 
-    if(mainnetNetwork == 'magenta'){
+    if(network == 'mainnet'){
       console.log('connecting to mainnet')
       setIndexerSignal(new SequenceIndexerClient('https://mainnet-indexer.sequence.app'))
       sequence.initWallet('mainnet')
-    } else if(polygonNetwork == 'magenta'){
+    } else if(network == 'polygon'){
       console.log('connecting to polygon')
       setIndexerSignal(new SequenceIndexerClient('https://polygon-indexer.sequence.app'))
       sequence.initWallet('polygon')
-    } else if(mumbaiNetwork == 'magenta'){
+    } else if(network == 'mumbai'){
       console.log('connecting to mumbai')
       setIndexerSignal(new SequenceIndexerClient('https://mumbai-indexer.sequence.app'))
       sequence.initWallet('mumbai')
@@ -333,7 +379,7 @@ const Explorer = () => {
         const listNames: any = []
         console.log(nonceList)
         for(let i = 0; i < nonceList; i++){
-          listNames.push(<li style={{cursor: 'pointer', margin: '10px', color: 'white'}} onClick={() => repopulate(i+1)}>{JSON.parse(localStorage.getItem(`list:${i+1}`)!).name}</li>)
+          listNames.push(<li key={i} style={{cursor: 'pointer', margin: '10px'}} onClick={() => repopulate(i+1)}><Text>{JSON.parse(localStorage.getItem(`list:${i+1}`)!).name}</Text></li>)
         }
 
         // set cids
@@ -347,21 +393,61 @@ const Explorer = () => {
 
   return (
     <div>
-      <span className='address-list'>saved address lists</span>
-      <hr style={{width: '20%'}}/>
-      <nav>
+      <Text>saved address lists</Text>
+      <br/>
+      <br/>
+      <Box style={{marginLeft: '80px'}}>
+        <nav>
           <ul>
               {cidList}
           </ul>
         </nav>
-      <hr style={{width: '20%'}}/>
-      <span className={`search-type ${contractSearch}`} onClick={() => {setSearchQuery('');setQuickView(false);setNFTs([]);searchType('contract')}}>contract</span><span className={`search-type ${walletSearch}`} onClick={() => {setSearchQuery('');setQuickView(false);setNFTs([]);searchType('wallet')}} >wallet</span>
+      </Box>
       <br/>
+      <Box justifyContent='center'>
+        <RadioGroup size='lg' gap='10' flexDirection="row" value={network} onValueChange={(value) => setNetwork(value)}name="network" options={[{'label': "mainnet", value: 'mainnet'},{'label': "polygon", value: 'polygon'},{'label': "mumbai", value: 'mumbai'},]}/>
+      </Box>
       <br/>
-      <span className={`network ${mainnetNetwork}`} onClick={() => {networkType('mainnet')}}>mainnet</span><span className={`network ${polygonNetwork}`} onClick={() => networkType('polygon')}>polygon</span><span className={`network ${mumbaiNetwork}`} onClick={() => networkType('mumbai')}>mumbai</span>
+      <Box justifyContent='center'>
+        <Tabs onValueChange={(value) => setNFTs([])} style={{width: '400px'}} defaultValue='txhistory' tabs={[
+          {
+            value: 'txhistory',
+            label: 'NFT Transaction History',
+            content: <TransactionHistory 
+                        indexer={indexerSignal} 
+                        setSearchQuery={setSearchQuery} 
+                        setNFTs={setNFTs} 
+                        setQuickView={setQuickView}
+                        setLoading={setLoading}
+                        setIsSearching={setIsSearching}
+                        setFileTitle={setFileTitle}
+                        setHeaders={setHeaders}
+                        setTransactions={setTransactions}
+                      />,
+          },
+          {
+            value: 'collections',
+            label: 'Collections',
+            content: <Collections 
+                        indexer={indexerSignal} 
+                        setSearchQuery={setSearchQuery} 
+                        setNFTs={setNFTs} 
+                        setQuickView={setQuickView}
+                        setLoading={setLoading}
+                        setIsSearching={setIsSearching}
+                        setFileTitle={setFileTitle}
+                        setHeaders={setHeaders}
+                        setTransactions={setTransactions}
+                      />,
+          }]}
+        />
+      </Box>
+      {/* <span className={`search-type ${contractSearch}`} onClick={() => {setSearchQuery('');setQuickView(false);setNFTs([]);searchType('contract')}}>contract</span><span className={`search-type ${walletSearch}`} onClick={() => {setSearchQuery('');setQuickView(false);setNFTs([]);searchType('wallet')}} >wallet</span> */}
       <br/>
-      <br/>
-      <input className="search" value={searchQuery} onInput={onChangeInput} placeholder="0x..."></input>
+      {/* <span className={`network ${mainnetNetwork}`} onClick={() => {networkType('mainnet')}}>mainnet</span><span className={`network ${polygonNetwork}`} onClick={() => networkType('polygon')}>polygon</span><span className={`network ${mumbaiNetwork}`} onClick={() => networkType('mumbai')}>mumbai</span> */}
+      
+
+      {/* <input className="search" value={searchQuery} onInput={onChangeInput} placeholder="0x..."></input> */}
       <br/>
       <br/>
       <Modal
@@ -380,7 +466,7 @@ const Explorer = () => {
       {
         NFTs.length > 0 
         ? <>
-            <span className='tx'>displaying {NFTs.length}&nbsp;</span> 
+            <Text>displaying {NFTs.length}&nbsp;</Text>
             <br/><br/>
             {
               contractSearch == 'search-activated' && !quickView
@@ -395,29 +481,41 @@ const Explorer = () => {
           </>
         : null
       }
-      <br/>
       {
-        loading ? <p className={'loading'}>loading ... </p> : NFTs.length > 0 ?  NFTs : isSearching ? <p className={'loading'}>No NFTs</p> : null
+        loading ? <Box justifyContent={'center'}><Box flexDirection="column" gap="2"><Placeholder size="md" /><br/><Placeholder size="md" /></Box></Box> : NFTs.length > 0 ?  NFTs : isSearching ? <Text>Nothing to show</Text> : null
       } 
     </div>
   );
 };
 
 function App() {
+
+  const {theme, setTheme} = useTheme()
+
   return (
     <div className="App">
+      <Box gap='6'>
+        <IconButton style={{position: 'fixed', top: '20px', right: '20px'}} icon={SunIcon} onClick={() => {
+          setTheme(theme == 'dark' ? 'light' : 'dark')
+        }}/>
+      </Box>
       <br/>
       <br/>
+      { 
+        theme == 'dark' 
+        ? 
+          <img className="center" src="https://docs.sequence.xyz/img/icons/sequence-composite-dark.svg" />
+        :
+          <img className='center' src="https://docs.sequence.xyz/img/icons/sequence-composite-light.svg"/> 
+      }
       <br/>
-      <img className="center" src="https://sequence.xyz/sequence-wordmark.svg" />
+      <br/>
+      <Text variant="large">explorer</Text>
       <br/>
       <br/>
-      <br/>
-      <br/>
-      <span className={`nav nav-active`}>explorer</span>
       <Explorer/>
     </div>
-  );
+  )
 }
 
 export default App;
