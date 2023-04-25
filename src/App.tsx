@@ -45,9 +45,10 @@ const Address = (props: any) => {
 const Transaction = (props: any) => {
   return(
     <>
-      <br/>
-      <span className="tx">{props.contractType}</span>&nbsp;&nbsp;<span className="tx">{props.transferType}</span> <span className="tx">{props.tokenId} from {props.from.slice(0,6)}... → to {props.to.slice(0,6)}...</span>
-      <br/>
+      <Box justifyContent='center' alignItems='center'>
+        <Text>{props.contractType} {props.tokenId} from </Text><GradientAvatar style={{margin: '10px'}} address={props.from}/><Text>{props.from.slice(0,6)}... → to </Text><GradientAvatar style={{margin: '10px'}} address={props.to}/><Text>{props.to.slice(0,6)}...</Text>
+      </Box>
+      {/* <span className="tx">{props.contractType}</span>&nbsp;&nbsp;<span className="tx">{props.transferType}</span> <span className="tx">{props.tokenId} from {props.from.slice(0,6)}... → to {props.to.slice(0,6)}...</span> */}
     </>
   )
 }
@@ -111,21 +112,97 @@ function exportCSVFile(headers: any, items: any, fileTitle: any) {
   }
 }
 
+const fullIndexerPagination = async (indexer: any, address: string) => {
+  const txs: any = []
+  // const indexer = new SequenceIndexerClient('https://mumbai-indexer.sequence.app')
+
+  // here we query the Joy contract address, but you can use any
+  const contractAddress = address;
+
+  const filter = {
+      contractAddress: contractAddress,
+  };
+
+  // query Sequence Indexer for all token transaction history on Mumbai
+  let txHistory = await indexer.getTransactionHistory({
+      filter: filter,
+      page: { pageSize: 10 }
+  })
+
+  
+  txs.push(...txHistory.transactions)
+
+  // if there are more transactions to log, proceed to paginate
+  while(txHistory.page.more){  
+      txHistory = await indexer.getTransactionHistory({
+          filter: filter,
+          page: { 
+              pageSize: 10, 
+              // use the after cursor from the previous indexer call
+              after: txHistory!.page!.after! 
+          }
+      })
+      txs.push(...txHistory.transactions)
+  }
+
+  return txs
+}
+
+const fullIndexerBalancePagination = async (indexer: any, address: string) => {
+  const txs: any = []
+  // const indexer = new SequenceIndexerClient('https://mumbai-indexer.sequence.app')
+
+  // here we query the Joy contract address, but you can use any
+  const contractAddress = address;
+
+  // const filter = {
+  //     contractAddress: contractAddress,
+  // };
+
+  // query Sequence Indexer for all token transaction history on Mumbai
+
+  let txHistory = await indexer.getTokenBalances({
+      accountAddress: address,
+      includeMetadata: true
+  })
+
+  // let txHistory = await indexer.getTransactionHistory({
+  //     filter: filter,
+  //     page: { pageSize: 10 }
+  // })
+
+  txs.push(...txHistory.balances)
+
+  // if there are more transactions to log, proceed to paginate
+  while(txHistory.page.more){  
+      txHistory = await indexer.getTokenBalances({
+          accountAddress: address,
+          includeMetadata: true,
+          page: { 
+              pageSize: 10, 
+              // use the after cursor from the previous indexer call
+              after: txHistory!.page!.after! 
+          }
+      })
+      txs.push(...txHistory.balances)
+  }
+
+  return txs
+}
+
 const TransactionHistory = (props: any) => {
   const {theme, setTheme} = useTheme()
 
   async function getHistory(address: any) {
 
     try {
-      const history = await props.indexer.getTransactionHistory({
-        filter: {contractAddress: address.target.value},
-      })
-  
-      console.log('token history of contract:', history)
+      const txsRes = await fullIndexerPagination(props.indexer, address.target.value)
+
+      console.log('token history of contract:', txsRes)
 
       let txs: any = []
 
-      history.transactions.map((tx: any) => {
+      txsRes.map((tx: any) => {
         console.log(tx)
         tx.transfers.map((transfer: any) => {
           transfer.tokenIds.map((tokenId: any) => {
@@ -206,14 +283,16 @@ const Collections = (props: any) => {
 
       const nfts: any = []
 
-      const balances = await props.indexer.getTokenBalances({
-        accountAddress: accountAddress,
-        includeMetadata: true
-      })
+      const balances = await fullIndexerBalancePagination(props.indexer, accountAddress)
+
+      // const balances = await props.indexer.getTokenBalances({
+      //   accountAddress: accountAddress,
+      //   includeMetadata: true
+      // })
 
       console.log(balances)
 
-      balances.balances.map((nft: any) => {
+      balances.map((nft: any) => {
         if((nft.contractType == 'ERC1155' || nft.contractType == 'ERC721') && nft.tokenMetadata && nft.tokenMetadata.image){
           nfts.push({ 
             image: nft.tokenMetadata.image, 
@@ -447,8 +526,6 @@ const Explorer = () => {
         />
       </Box>
       <br/>
-      <br/>
-      <br/>
       <Modal
         isOpen={modalIsOpen}
         // onAfterOpen={afterOpenModal}
@@ -461,7 +538,6 @@ const Explorer = () => {
         &nbsp;&nbsp;&nbsp;
         <button onClick={() => acceptModalEntry()} className='export'>save list</button> 
       </Modal>
-      <br/>
       {
         NFTs.length > 0 
         ? <>
@@ -480,6 +556,9 @@ const Explorer = () => {
           </>
         : null
       }
+      <br/>
+      <br/>
+
       {
         loading ? <Box justifyContent={'center'}><Box flexDirection="column" gap="2"><Placeholder size="md" /><br/><Placeholder size="md" /></Box></Box> : NFTs.length > 0 ?  NFTs : isSearching ? <Text>Nothing to show</Text> : null
       } 
