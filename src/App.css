@@ -88,7 +88,7 @@ input {
   font-family: 'Maison';
 }
 
-input {
+/* input {
   font-family: 'Maison';
   background: transparent;
   border: 1px solid lightgrey;
@@ -97,7 +97,7 @@ input {
   width: 200px;
   text-align: center;
   color: white;
-}
+} */
 
 .search-type {
   background-color: rgb(25 25 25);

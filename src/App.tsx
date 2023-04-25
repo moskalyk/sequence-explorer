@@ -4,7 +4,7 @@ import './App.css';
 import {ethers} from 'ethers'
 import { sequence } from '0xsequence'
 import { SequenceIndexerClient } from '@0xsequence/indexer'
-import Modal from 'react-modal';
+// import Modal from 'react-modal';
 
 import { 
   SearchInput,
@@ -13,10 +13,12 @@ import {
   Tabs, 
   Scroll,
   Text, 
+  TextInput,
   Button, 
   Box, 
   IconButton, 
   SunIcon, 
+  Modal,
   Placeholder,
   useTheme } from '@0xsequence/design-system'
 
@@ -282,13 +284,7 @@ const Collections = (props: any) => {
       let accountAddress = address.target.value
 
       const nfts: any = []
-
       const balances = await fullIndexerBalancePagination(props.indexer, accountAddress)
-
-      // const balances = await props.indexer.getTokenBalances({
-      //   accountAddress: accountAddress,
-      //   includeMetadata: true
-      // })
 
       console.log(balances)
 
@@ -375,16 +371,6 @@ const Explorer = () => {
     setWalletSearch(null)
     if(search == 'contract') setContractSearch('search-activated')
     else setWalletSearch('search-activated')
-  }
-
-  const networkType = (network: any) => {
-    setPolygonNetwork(null)
-    setMainnetNetwork(null)
-    setMumbaiNetwork(null)
-
-    if(network == 'mainnet') setMainnetNetwork('magenta')
-    else if (network == 'polygon') setPolygonNetwork('magenta')
-    else if (network == 'mumbai') setMumbaiNetwork('magenta')
   }
 
   const saveList = (transactions: any) => {
@@ -526,7 +512,21 @@ const Explorer = () => {
         />
       </Box>
       <br/>
-      <Modal
+      {
+        modalIsOpen 
+        ? 
+          <Modal size='sm'> 
+            <Box style={{margin: '20px'}}>
+              <h2>Give your list a name</h2>
+              <TextInput  placeholder='list name' onChange={onChangeInputModal}/>
+              &nbsp;&nbsp;&nbsp;
+              <button onClick={() => acceptModalEntry()} className='export'>save list</button> 
+            </Box>
+          </Modal>
+        :
+          null
+      }
+      {/* <Modal
         isOpen={modalIsOpen}
         // onAfterOpen={afterOpenModal}
         onRequestClose={closeModal}
@@ -537,7 +537,7 @@ const Explorer = () => {
         <input placeholder='list name' onChange={onChangeInputModal}/>
         &nbsp;&nbsp;&nbsp;
         <button onClick={() => acceptModalEntry()} className='export'>save list</button> 
-      </Modal>
+      </Modal> */}
       {
         NFTs.length > 0 
         ? <>
