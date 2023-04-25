@@ -526,18 +526,6 @@ const Explorer = () => {
         :
           null
       }
-      {/* <Modal
-        isOpen={modalIsOpen}
-        // onAfterOpen={afterOpenModal}
-        onRequestClose={closeModal}
-        style={customStyles}
-        contentLabel="Example Modal"
-      >
-        <h2>Give your list a name</h2>
-        <input placeholder='list name' onChange={onChangeInputModal}/>
-        &nbsp;&nbsp;&nbsp;
-        <button onClick={() => acceptModalEntry()} className='export'>save list</button> 
-      </Modal> */}
       {
         NFTs.length > 0 
         ? <>
