@@ -479,7 +479,7 @@ const Explorer = () => {
         <Tabs onValueChange={(value) => setNFTs([])} style={{width: '400px'}} defaultValue='txhistory' tabs={[
           {
             value: 'txhistory',
-            label: 'Transaction History',
+            label: 'Contract History',
             content: <TransactionHistory 
                         indexer={indexerSignal} 
                         setSearchQuery={setSearchQuery} 
